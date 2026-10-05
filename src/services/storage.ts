@@ -11,6 +11,7 @@ import {
   UserProfile,
   WithdrawalRequest,
 } from '../types';
+import { supabaseSync } from './supabase';
 
 // Default initial state
 const DEFAULT_USER: UserProfile = {
@@ -147,6 +148,7 @@ class StorageService {
   public updateUser(updater: Partial<UserProfile>): UserProfile {
     this.user = { ...this.user, ...updater };
     this.saveToStorage('coc_user', this.user);
+    supabaseSync.syncUser(this.user);
     return this.user;
   }
 
@@ -157,6 +159,7 @@ class StorageService {
   public updateSettings(newSettings: Partial<AdminSettings>): AdminSettings {
     this.settings = { ...this.settings, ...newSettings };
     this.saveToStorage('coc_settings', this.settings);
+    supabaseSync.syncSettings(this.settings);
     return this.settings;
   }
 
@@ -216,6 +219,7 @@ class StorageService {
     };
     this.deposits.unshift(deposit);
     this.saveToStorage('coc_deposits', this.deposits);
+    supabaseSync.recordDeposit(deposit);
 
     // Credit user balance
     this.updateUser({ balance: Number((this.user.balance + amount).toFixed(2)) });
@@ -244,6 +248,7 @@ class StorageService {
 
     this.withdrawals.unshift(req);
     this.saveToStorage('coc_withdrawals', this.withdrawals);
+    supabaseSync.recordWithdrawal(req);
     return req;
   }
 
@@ -386,6 +391,7 @@ class StorageService {
 
     this.bets.unshift(bet);
     this.saveToStorage('coc_bets', this.bets);
+    supabaseSync.recordBet(bet);
 
     this.updateUser({ totalBetsPlaced: this.user.totalBetsPlaced + 1 });
 
@@ -445,10 +451,12 @@ class StorageService {
             totalLostAmount: Number((this.user.totalLostAmount + bet.amount).toFixed(2)),
           });
         }
+        supabaseSync.recordBet(bet);
       }
     });
 
     this.saveToStorage('coc_bets', this.bets);
+    supabaseSync.recordRound(round);
 
     // Generate fresh round for this coin immediately
     this.rounds[coin] = this.generateNewRound(coin, round.duration, exitPrice);
