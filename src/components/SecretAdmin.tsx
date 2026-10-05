@@ -41,6 +41,8 @@ interface SecretAdminProps {
   onRejectWithdrawal: (id: string) => void;
 }
 
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "Sam18101998&&&&";
+
 export const SecretAdmin: React.FC<SecretAdminProps> = ({
   currentSubRoute,
   onNavigate,
@@ -57,8 +59,7 @@ export const SecretAdmin: React.FC<SecretAdminProps> = ({
   onRejectWithdrawal,
 }) => {
   const [password, setPassword] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Dashboard state
@@ -70,8 +71,8 @@ export const SecretAdmin: React.FC<SecretAdminProps> = ({
 
   // Check stored admin session token
   useEffect(() => {
-    const token = sessionStorage.getItem('coc_admin_token');
-    if (token) {
+    const session = localStorage.getItem('coc_admin_session') || sessionStorage.getItem('coc_admin_token');
+    if (session) {
       setIsAuthenticated(true);
       if (currentSubRoute === '/admin') {
         onNavigate('/admin/dashboard');
@@ -81,37 +82,21 @@ export const SecretAdmin: React.FC<SecretAdminProps> = ({
     }
   }, [currentSubRoute]);
 
-  // Server-side password check via POST /api/admin/login
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg('');
-    setIsLoading(true);
-
-    try {
-      const res = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        sessionStorage.setItem('coc_admin_token', data.token || 'verified');
-        setIsAuthenticated(true);
-        setPassword('');
-        onNavigate('/admin/dashboard');
-      } else {
-        setErrorMsg(data.error || 'كلمة مرور خاطئة');
-      }
-    } catch {
-      setErrorMsg('كلمة مرور خاطئة');
-    } finally {
-      setIsLoading(false);
+  // 100% frontend login handler for Cloudflare Pages static hosting
+  const handleLogin = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (password.trim() === ADMIN_PASSWORD) {
+      localStorage.setItem("coc_admin_session", Date.now().toString());
+      setIsAuthenticated(true);
+      setError("");
+      onNavigate('/admin/dashboard');
+    } else {
+      setError("كلمة مرور خاطئة");
     }
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('coc_admin_session');
     sessionStorage.removeItem('coc_admin_token');
     setIsAuthenticated(false);
     onNavigate('/admin');
@@ -146,10 +131,10 @@ export const SecretAdmin: React.FC<SecretAdminProps> = ({
             </p>
           </div>
 
-          {errorMsg && (
+          {error && (
             <div className="p-3 bg-[#EF4444]/15 border border-[#EF4444]/30 rounded-2xl text-xs font-bold text-[#F87171] flex items-center justify-center gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0" />
-              <span>{errorMsg}</span>
+              <span>{error}</span>
             </div>
           )}
 
@@ -167,14 +152,9 @@ export const SecretAdmin: React.FC<SecretAdminProps> = ({
 
             <button
               type="submit"
-              disabled={isLoading}
               className="w-full min-h-[48px] py-3.5 bg-[#F59E0B] hover:bg-[#D97706] text-black font-extrabold text-base rounded-2xl shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-[0.99]"
             >
-              {isLoading ? (
-                <RefreshCw className="w-5 h-5 animate-spin text-black" />
-              ) : (
-                <span>دخول</span>
-              )}
+              <span>دخول</span>
             </button>
           </form>
 

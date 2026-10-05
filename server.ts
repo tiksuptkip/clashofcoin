@@ -6,25 +6,8 @@ dotenv.config();
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Sam18101998&&&&';
 
 app.use(express.json());
-
-// Server-side authentication verification endpoint
-app.post('/api/admin/login', (req, res) => {
-  const { password } = req.body;
-  if (password === ADMIN_PASSWORD) {
-    return res.json({
-      success: true,
-      token: 'coc_admin_session_' + Date.now(),
-    });
-  } else {
-    return res.status(401).json({
-      success: false,
-      error: 'كلمة مرور خاطئة',
-    });
-  }
-});
 
 async function startServer() {
   const isProd = process.env.NODE_ENV === 'production';
