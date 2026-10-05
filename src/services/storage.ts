@@ -17,13 +17,13 @@ import { supabaseSync } from './supabase';
 const DEFAULT_USER: UserProfile = {
   id: 'usr_clash_9812',
   email: 'trader@clashofcoin.bet',
-  balance: 500.0, // default testing starting balance
-  walletBalance: 1250.0,
+  balance: 0, // default testing starting balance
+  walletBalance:  0,
   referralCode: 'CLASHWIN',
-  referralEarnings: 45.0,
-  totalBetsPlaced: 14,
-  totalWonAmount: 320.0,
-  totalLostAmount: 180.0,
+  referralEarnings:0,
+  totalBetsPlaced: 0,
+  totalWonAmount: 0,
+  totalLostAmount: 0,
   createdAt: Date.now() - 86400000 * 3,
 };
 
